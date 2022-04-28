@@ -85,7 +85,7 @@ m02_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/B
 m03_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo03.zip", "737-Modulo03/Enaho01A-2020-300.sav"))
 
 #modulo 05: Empleo e Ingresos
-m05_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo05.zip", "737-Modulo05/Enaho01a-2020-500.sav"))
+m05_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo05.zip", "737-Modulo05/Enaho01A-2020-500.sav"))
 
 #modulo 34: Sumarias (Variables Calculadas)
 m34_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo34.zip", "737-Modulo34/Sumaria-2020.sav"))
@@ -177,34 +177,35 @@ ids<-c("AÑO","MES","NCONGLOME","VIVIENDA","HOGAR","UBIGEO","DOMINIO","ESTRATO")
 
 #ENAHO 2019
 enaho2019<-
+  
   #modulo1
-  m01_2019 %>% 
-  select(ids,PANEL,NBI4,NBI5,LATITUD,LONGITUD,ALTURA,FACTOR=FACTOR07) %>%
+  m01_2019 %>% select(ids,PANEL,NBI4,NBI5,FACTOR=FACTOR07) %>%
   #modulo2
-  full_join(m02_2019 %>% select(ids,CODPERSO,P201P,P203,P203B,P207,P208A,FACTOR=FACPOB07)) %>% 
+  full_join(m02_2019 %>% select(ids,CODPERSO,P201P,P203,P203B,P207,P208A,FACTOR=FACPOB07)) %>% #redundante
   #modulo3
-  full_join(m03_2019 %>% select(ids,CODPERSO,P300A,P301A,P207,FACTOR=FACTOR07)) %>% 
-  #modulo5
-  full_join(m05_2019 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FACTOR=FAC500A)) %>% 
+  full_join(m03_2019 %>% select(ids,CODPERSO,P300A,P301A,P207,FACTOR=FACTOR07)) %>% #idioma materno nomas
   #modulo34
-  full_join(m34_2019 %>% select(ids,ESTRSOCIAL,POBREZA,FACTOR=FACTOR07))
+  full_join(m34_2019 %>% select(ids,ESTRSOCIAL,POBREZA,FACTOR=FACTOR07)) %>% 
+  #modulo5
+  right_join(m05_2019 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FACTOR_TRABAJO=FAC500A))
 
 #ENAHO 2020
 enaho2020<-
   #modulo1
-  m01_2020 %>% 
-  select(ids,PANEL,NBI4,NBI5,LATITUD,LONGITUD,ALTURA,FACTOR=FACTOR07) %>%
+  m01_2020 %>% select(ids,PANEL,NBI4,NBI5,FACTOR=FACTOR07) %>%
   #modulo2
   full_join(m02_2020 %>% select(ids,CODPERSO,P201P,P203,P203B,P207,P208A,FACTOR=FACPOB07)) %>% 
   #modulo3
   full_join(m03_2020 %>% select(ids,CODPERSO,P300A,P301A,P207,FACTOR=FACTOR07)) %>% 
-  #modulo5
-  full_join(m05_2020 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FACTOR=FAC500A)) %>% 
   #modulo34
-  full_join(m34_2020 %>% select(ids,ESTRSOCIAL,POBREZA,FACTOR=FACTOR07))
+  full_join(m34_2020 %>% select(ids,ESTRSOCIAL,POBREZA,FACTOR=FACTOR07)) %>% 
+  #modulo5
+  right_join(m05_2020 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FACTOR_TRABAJO=FAC500A))
 
 enaho19_20<-
   bind_rows(enaho2019, enaho2020)
+
+write_sav(enaho19_20, "enaho_2019_2020.sav")
 
 ```
 
