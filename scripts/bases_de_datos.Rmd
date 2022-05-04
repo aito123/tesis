@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 ```{r}
 pacman::p_load(
+  #Working directory
+  here,
   #data tools
   tidyverse, janitor, glue, lubridate, scales, Hmisc,lazyeval,
   #Gráficos
@@ -136,7 +138,7 @@ Se seleccionan las siguientes variables del **módulo 03: Educación.**
 
 ```{r}
 m03_2019 %>%
-  select(CODPERSO,P300A,FACTOR07)%>%
+  select(CODPERSO,P300A,P301A,FACTOR07)%>%
   sjPlot::view_df()
 
 ```
@@ -147,7 +149,7 @@ Se seleccionan las siguientes variables del **módulo 05: Empleo e Ingresos.**
 
 ```{r}
 m05_2019 %>%
-  select(CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A)%>%
+  select(CODPERSO,P507,P207,P208A,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A)%>%
   sjPlot::view_df()
 
 ```
@@ -171,11 +173,11 @@ ids<-c("AÑO","MES","CONGLOME","VIVIENDA","HOGAR","UBIGEO","DOMINIO","ESTRATO")
 #ENAHO 2019
 enaho2019<-
   #modulo5 = base
-  m05_2019 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %>% 
+  m05_2019 %>% select(ids,CODPERSO,P507,P207,P208A,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %>% 
   #modulo1
   left_join(m01_2019 %>% select(ids,PANEL,NBI1,NBI2,NBI3,NBI4,NBI5,FACTOR07)) %>%
   #modulo3
-  left_join(m03_2019 %>% select(ids,CODPERSO,P300A,FACTOR07)) %>% 
+  left_join(m03_2019 %>% select(ids,CODPERSO,P300A,P301A,FACTOR07)) %>% 
   #modulo34
   left_join(m34_2019 %>% select(ids,MIEPERHO,INGHOG2D,GASHOG2D,GRU11HD,ESTRSOCIAL,POBREZA,FACTOR07))
   
@@ -183,11 +185,11 @@ enaho2019<-
 #ENAHO 2020
 enaho2020<-
   #modulo5 = base
-  m05_2020 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %>% 
+  m05_2020 %>% select(ids,CODPERSO,P507,P207,P208A,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %>% 
   #modulo1
   left_join(m01_2020 %>% select(ids,PANEL,NBI1,NBI2,NBI3,NBI4,NBI5,FACTOR07)) %>%
   #modulo3
-  left_join(m03_2020 %>% select(ids,CODPERSO,P300A,FACTOR07)) %>% 
+  left_join(m03_2020 %>% select(ids,CODPERSO,P300A,P301A,FACTOR07)) %>% 
   #modulo34
   left_join(m34_2020 %>% select(ids,MIEPERHO,INGHOG2D,GASHOG2D,GRU11HD,ESTRSOCIAL,POBREZA,FACTOR07))
 

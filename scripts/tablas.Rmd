@@ -2,7 +2,11 @@
 title: "Tablas de datos"
 author: "Santiago Sotelo"
 date: '2022-05-03'
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_depth: 5
+    theme: united
 ---
 
 ```{r setup, include=FALSE}
@@ -50,7 +54,7 @@ dim(base)
 
 ```
 
-Cuenta con 183411 observaciones y 30 variables las cuales son:
+Cuenta con 183411 observaciones y 35 variables las cuales son:
 
 ```{r}
 names(base)
@@ -68,16 +72,16 @@ Ahora bien, antes de iniciar con las tablas es necesario filtrar los casos que e
 
 ### Filtrar
 
-El estudio se centra en el área urbana del Perú por lo cual nos apoyaremos de la variable `estrato` y `estrsocial`:
+El estudio se centra en el área urbana del Perú por lo cual nos apoyaremos de la variable `estrato` y `estrsocial`. Asimismo, dado que refiere a la población dentro del mercado laboral, ya sea formal o informal, entonces filtraremos por "Población Económicamente Activa Ocupada" (`ocu500`):
 
 ```{r}
 base1<-
   base %>% 
-  filter(!(estrato %in% c(7,8)) & !(estrsocial %in% 6) & !is.na(estrsocial)) 
+  filter(!(estrato %in% c(7,8)) & !(estrsocial %in% 6) & !is.na(estrsocial) & ocu500 %in% 1) 
 
 ```
 
-De esta manera filtramos aquellos que eran parte de un "Área de Empadronamiento Rural" y que fueron asignados como "Rural" en el estrato socio-económico (o tenían un valor perdido en esta).
+De esta manera filtramos aquellos que eran parte de un "Área de Empadronamiento Rural" y que fueron asignados como "Rural" en el estrato socio-económico (o tenían un valor perdido en esta), así como también a las personas desocupadas y a los que no son parte de la PEA.
 
 ### Nuevas variables
 
@@ -86,6 +90,8 @@ Ahora creamos las siguientes variables a partir de las variables seleccionadas:
 - Departamento del encuestado
 
 - Dominio resumido
+
+- Grupos de edad
 
 - Cuenta con una (o más) Necesidad Básica Insatisfecha (sí/no)
 
@@ -139,6 +145,18 @@ base2<-
       dominio %in% c(8) ~ "Lima Metropolitana",
     ),
     
+    #gedad
+    gedad=cut2(p208a, cuts = c(25,35,45,55,65)),
+    gedad=case_when(
+      gedad %in% "[14,25)" ~ "De 24 años a menos",
+      gedad %in% "[25,35)" ~ "De 25 a 34 años",
+      gedad %in% "[35,45)" ~ "De 35 a 44 años",
+      gedad %in% "[45,55)" ~ "De 45 a 54 años",
+      gedad %in% "[55,65)" ~ "De 55 a 64 años",
+      gedad %in% "[65,97]" ~ "De 65 años a más"
+    ),
+    gedad=ordered(as.factor(gedad)),
+    
     #NBI dicotómica
     nbi=case_when(
       (nbi1+nbi2+nbi3+nbi4+nbi5) > 0 ~ 1,
@@ -155,23 +173,619 @@ base2<-
     gas_cap=gashog2d/mieperho
     
   )
+
 ```
 
 ## Tablas
 
+Prueba de concepto:
+
+Comparando funciones adaptadas del script "Pregúntale a la ENAHO" elaborado por el prof. David Sulmont.
+
+Variables categóricas
+
+```{r}
+#Variables count / categóricas
+prop.table(xtabs(factor07 ~ estrsocial, data = as_label(base)))*100
+
+#version moderna
+base %>%
+  as_label() %>% 
+  as_survey_design(weight = factor07,
+                   variables = c(estrsocial)) %>% 
+  tbl_svysummary(
+    statistic = everything()~"{p}%",
+    digits = everything()~c(6)
+    )
+```
+
+Variables numéricas
+
+```{r, eval=FALSE}
+#Variables wdt.mean / numéricas
+plyr::ddply(as_label(base),~ estrsocial,summarise,  
+            Media=wtd.mean(inghog2d,factor07, na.rm=T))
+
+base %>%
+  as_label() %>% 
+  #as_survey_design(1, weight = FACTOR07, variables = c(P612A, P612N)) %>%
+  #group_by(estrsocial) %>%
+  summarize(mean = wtd.mean(inghog2d, factor07))
+
+#version moderna
+base %>%
+  as_label() %>% 
+  as_survey_design(weight = factor07,
+                   variables = c(estrsocial,inghog2d)) %>% 
+  tbl_svysummary(
+    by=estrsocial ,#columna
+    include = c("estrsocial","inghog2d"),#fila
+    statistic = all_continuous()~"{median}",
+    #digits = everything()~c(6)
+    ) %>%
+    modify_header(label = "Variable")
+```
+
 Variables de cruce:
 
 - Año
+
 - Dominio resumido
+
 - Sexo
+
 - Lengua materna
+
 - Estrato socio-económico
+
 - Situación de informalidad (ocupación principal)
 
-### Ocupación principal
+### Datos sobre empleo y trabajo
 
-#### 2019
+#### Ocupación principal (p507)
+
+##### 2019
+
 ```{r}
+
+#informal
+tab2019_p507_inf<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = p507, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2019_p507_for<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = p507, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2019_p507<-
+  tbl_merge(list(tab2019_p507_inf,tab2019_p507_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2019**")
+
+tab2019_p507
+
+```
+
+##### 2020
+
+```{r}
+
+#informal
+tab2020_p507_inf<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2020") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = p507, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2020_p507_for<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2020") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = p507, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2020_p507<-
+  tbl_merge(list(tab2020_p507_inf,tab2020_p507_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2020**")
+
+tab2020_p507
+
+```
+
+#### Horas trabajadas (i520)
+
+#### Empleo informal dentro y fuera del sector informal (emplpsec)
+
+##### 2019
+
+```{r}
+
+#solo informal
+tab2019_emplpsec<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = emplpsec, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels() %>%
+  modify_caption("**Año: 2019**")
+
+tab2019_emplpsec
+
+```
+
+##### 2020
+
+```{r}
+
+#solo informal
+tab2020_emplpsec<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = emplpsec, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels() %>%
+  modify_caption("**Año: 2020**")
+
+tab2020_emplpsec
+
+```
+
+
+### Condiciones de vida de los trabajadores
+
+#### ¿Tiene Necesidades Básicas Insatisfechas? (nbi)
+
+##### 2019
+
+```{r}
+
+#informal
+tab2019_nbi_inf<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2019_nbi_for<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2019_nbi<-
+  tbl_merge(list(tab2019_nbi_inf,tab2019_nbi_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2019**")
+
+tab2019_nbi
+
+```
+
+##### 2020
+
+```{r}
+
+#informal
+tab2020_nbi_inf<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2020_nbi_for<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2020_nbi<-
+  tbl_merge(list(tab2020_nbi_inf,tab2020_nbi_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2020**")
+
+tab2020_nbi
+
+```
+
+
+#### ¿Cuántas Necesidades Básicas Insatisfechas tiene? (nbi_total)
+
+##### 2019
+
+```{r}
+
+#informal
+tab2019_nbi_total_inf<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi_total, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2019_nbi_total_for<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi_total, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2019_nbi_total<-
+  tbl_merge(list(tab2019_nbi_total_inf,tab2019_nbi_total_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2019**")
+
+tab2019_nbi_total
+
+```
+
+##### 2020
+
+```{r}
+
+#informal
+tab2020_nbi_total_inf<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi_total, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2020_nbi_total_for<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = nbi_total, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2020_nbi_total<-
+  tbl_merge(list(tab2020_nbi_total_inf,tab2020_nbi_total_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2020**")
+
+tab2020_nbi_total
+
+```
+
+#### Ingreso per capita (ing_cap)
+
+#### Gasto per capita (gas_cap)
+
+#### Situación de pobreza (pobreza)
+
+##### 2019
+
+```{r}
+
+#informal
+tab2019_pobreza_inf<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = pobreza, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2019_pobreza_for<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = pobreza, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2019_pobreza<-
+  tbl_merge(list(tab2019_pobreza_inf,tab2019_pobreza_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2019**")
+
+tab2019_pobreza
+
+```
+
+##### 2020
+
+```{r}
+
+#informal
+tab2020_pobreza_inf<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = pobreza, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2020_pobreza_for<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = pobreza, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2020_pobreza<-
+  tbl_merge(list(tab2020_pobreza_inf,tab2020_pobreza_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2020**")
+
+tab2020_pobreza
+
+```
+
+
+#### Departamento (dpto)
+
+##### 2019
+
+```{r}
+
+#informal
+tab2019_dpto_inf<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = dpto, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2019_dpto_for<-
+  base2 %>%
+  #año 2019
+  filter(ano %in% "2019") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = dpto, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2019_dpto<-
+  tbl_merge(list(tab2019_dpto_inf,tab2019_dpto_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2019**")
+
+tab2019_dpto
+
+```
+
+##### 2020
+
+```{r}
+
+#informal
+tab2020_dpto_inf<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #informal
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = dpto, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+#formal
+tab2020_dpto_for<-
+  base2 %>%
+  #año 2020
+  filter(ano %in% "2020") %>% 
+  #formal
+  filter(ocupinf %in% 2) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = dpto, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    ) %>%
+  modify_header(label = md("**Variable**")) %>% 
+  bold_labels()
+
+tab2020_dpto<-
+  tbl_merge(list(tab2020_dpto_inf,tab2020_dpto_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
+  modify_caption("**Año: 2020**")
+
+tab2020_dpto
+
+```
+
+
+
+
+
+
+## Notas
+
+```{r, eval=FALSE}
+
 # base2 %>%
 #   as_label() %>%
 #   select(
@@ -194,38 +808,38 @@ Variables de cruce:
 survey::svydesign(id = ~1, weights = ~fac500a, data = as_label(base2) %>% filter(ano %in% "2019")) %>%
   tbl_svysummary(by = p507, include = c(dominio_r, p207, p300a, estrsocial, ocupinf))
 
-```
 
-#### 2020
-```{r}
+
+#informal
+tbl1<-
+  base2 %>%
+  filter(ocupinf %in% 1) %>% 
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_svysummary(
+    by = p507, 
+    include = c(p207, gedad, dominio_r, estrato, p301a, p300a),
+    statistic = all_categorical()~"{p}%"
+    )
+
+prop.table(xtabs(factor07 ~ estrsocial, data = as_label(base2)))*100
+
+#ocupacion
+base2 %>%
+  as_label() %>% 
+  as_survey_design(weight = fac500a) %>% 
+  tbl_strata(
+    strata = ano,
+    .tbl_fun =
+      ~ .x %>%
+        tbl_svysummary(
+          by = p507, 
+          include = c(dominio_r, p207, p300a),
+          .header = "**{strata}**, N = {n}")
+  )
 
 survey::svydesign(id = ~1, weights = ~fac500a, data = as_label(base2) %>% filter(ano %in% "2020")) %>%
   tbl_svysummary(by = p507, include = c(dominio_r, p207, p300a, estrsocial, ocupinf))
 
-```
-
-
-## Sintaxis para tabla
-
-### Código para tabla para variables numérica (wdt.mean)
-
-```{r, eval=FALSE}
-data %>%
-  as_label() %>%
-  group_by(var1) %>%
-  summarise(Media = wtd.mean(var2, FACTOR))
-
-```
-
-### Código para tabla para variables categóricas (count)
-
-```{r, eval=FALSE}
-data %>%
-  as_label() %>%
-  group_by(var1, var2) %>%
-  count(wt=FACTOR) %>%
-  filter(!is.na(var1)) %>%
-  group_by(var2) %>%
-  mutate(n=round_half_up(n), porc=round_half_up(n/sum(n)*100, 2))
 ```
 

@@ -373,6 +373,8 @@ pre code {
 <div id="paquetes" class="section level2">
 <h2>Paquetes</h2>
 <pre class="r"><code>pacman::p_load(
+  #Working directory
+  here,
   #data tools
   tidyverse, janitor, glue, lubridate, scales, Hmisc,lazyeval,
   #Gráficos
@@ -389,7 +391,10 @@ pre code {
   sf, sfheaders, leaflet, osmdata,
   #Trabajar con encuestas
   survey, srvyr
-  )</code></pre>
+  )
+
+#Set working directory de manera relativa
+here::i_am(&quot;scripts/bases_de_datos.Rmd&quot;)</code></pre>
 </div>
 <div id="bases-de-datos" class="section level2">
 <h2>Bases de datos</h2>
@@ -429,31 +434,31 @@ viviendas particulares.</p>
 <pre class="r"><code>#ENAHO 2019 ACTUALIZADA ANUAL
 
 #modulo 01: Características de la Vivienda y del Hogar
-m01_2019&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo01.zip&quot;, &quot;687-Modulo01/Enaho01-2019-100.sav&quot;))
+m01_2019&lt;-read_sav(here(&quot;687-Modulo01/Enaho01-2019-100.sav&quot;))
 
 #modulo 03: Educación
-m03_2019&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo03.zip&quot;, &quot;687-Modulo03/Enaho01A-2019-300.sav&quot;))
+m03_2019&lt;-read_sav(here(&quot;687-Modulo03/Enaho01A-2019-300.sav&quot;))
 
 #modulo 05: Empleo e Ingresos
-m05_2019&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo05.zip&quot;, &quot;687-Modulo05/Enaho01a-2019-500.sav&quot;))
+m05_2019&lt;-read_sav(here(&quot;687-Modulo05/Enaho01a-2019-500.sav&quot;))
 
 #modulo 34: Sumarias (Variables Calculadas)
-m34_2019&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo34.zip&quot;, &quot;687-Modulo34/Sumaria-2019.sav&quot;))
+m34_2019&lt;-read_sav(here(&quot;687-Modulo34/Sumaria-2019.sav&quot;))
 
 
 #ENAHO 2020 ACTUALIZADA ANUAL
 
 #modulo 01: Características de la Vivienda y del Hogar
-m01_2020&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo01.zip&quot;, &quot;737-Modulo01/Enaho01-2020-100.sav&quot;))
+m01_2020&lt;-read_sav(here(&quot;737-Modulo01/Enaho01-2020-100.sav&quot;))
 
 #modulo 03: Educación
-m03_2020&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo03.zip&quot;, &quot;737-Modulo03/Enaho01A-2020-300.sav&quot;))
+m03_2020&lt;-read_sav(here(&quot;737-Modulo03/Enaho01A-2020-300.sav&quot;))
 
 #modulo 05: Empleo e Ingresos
-m05_2020&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo05.zip&quot;, &quot;737-Modulo05/Enaho01A-2020-500.sav&quot;))
+m05_2020&lt;-read_sav(here(&quot;737-Modulo05/Enaho01A-2020-500.sav&quot;))
 
 #modulo 34: Sumarias (Variables Calculadas)
-m34_2020&lt;-read_sav(unzip(&quot;C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo34.zip&quot;, &quot;737-Modulo34/Sumaria-2020.sav&quot;))</code></pre>
+m34_2020&lt;-read_sav(here(&quot;737-Modulo34/Sumaria-2020.sav&quot;))</code></pre>
 </div>
 <div id="variables-identificadoras" class="section level2">
 <h2>Variables Identificadoras</h2>
@@ -789,7 +794,7 @@ Factor de Expansión Anual Proyecciones CPV-2007
 <p>Se seleccionan las siguientes variables del <strong>módulo 03:
 Educación.</strong></p>
 <pre class="r"><code>m03_2019 %&gt;%
-  select(CODPERSO,P300A,FACTOR07)%&gt;%
+  select(CODPERSO,P300A,P301A,FACTOR07)%&gt;%
   sjPlot::view_df()</code></pre>
 <table style="border-collapse:collapse; border:none;">
 <caption>
@@ -852,12 +857,34 @@ escucha/no habla<br>Lengua de señas peruanas
 3
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-FACTOR07
+P301A
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
+¿Cuál es el último año o grado de estudios y nivel<br>que aprobó? -
+Nivel
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top;">
+1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top;">
+Sin nivel<br>Educación inicial<br>Primaria incompleta<br>Primaria
+completa<br>Secundaria incompleta<br>Secundaria completa<br>Superior no
+universitaria Incompleta<br>Superior no universitaria
+completa<br>Superior universitaria incompleta<br>Superior universitaria
+completa<br>Maestria/Doctorado<br>Básica especial
+</td>
+</tr>
+<tr>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
+4
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
+FACTOR07
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
 Factor de expansión anual proyecciones CPV-2007
 </td>
-<td style="padding:0.2cm; text-align:left; vertical-align:top;" colspan="2">
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee" colspan="2">
 <em>range: 2.8-1751.3</em>
 </td>
 </tr>
@@ -868,7 +895,7 @@ Factor de expansión anual proyecciones CPV-2007
 <p>Se seleccionan las siguientes variables del <strong>módulo 05: Empleo
 e Ingresos.</strong></p>
 <pre class="r"><code>m05_2019 %&gt;%
-  select(CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A)%&gt;%
+  select(CODPERSO,P507,P207,P208A,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A)%&gt;%
   sjPlot::view_df()</code></pre>
 <table style="border-collapse:collapse; border:none;">
 <caption>
@@ -948,14 +975,13 @@ Hombre<br>Mujer
 4
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-I520
+P208A
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-(Imputado) Normalmente, ¿Cuántas horas trabaja a<br>la semana en todas
-sus ocupaciones?
+¿Qué edad tiene en años cumplidos?
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee" colspan="2">
-<em>range: 1.0-98.0</em>
+<em>range: 14-98</em>
 </td>
 </tr>
 <tr>
@@ -963,16 +989,14 @@ sus ocupaciones?
 5
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-I538A1
+I520
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-(Imputado, deflactado, anualizado) ¿Cuánto fue su<br>ingreso en el mes
-anterior, incluyendo horas<br>extras, bonificaciones, pago por concepto
-de<br>refrigerio, etc. en su(s) ocupación(es)<br>secundaria(as)? - Monto
-Total S/. - Ingreso Total
+(Imputado) Normalmente, ¿Cuántas horas trabaja a<br>la semana en todas
+sus ocupaciones?
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;" colspan="2">
-<em>range: 120.0-71854.0</em>
+<em>range: 1.0-98.0</em>
 </td>
 </tr>
 <tr>
@@ -980,13 +1004,13 @@ Total S/. - Ingreso Total
 6
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-I538E1
+I538A1
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
 (Imputado, deflactado, anualizado) ¿Cuánto fue su<br>ingreso en el mes
 anterior, incluyendo horas<br>extras, bonificaciones, pago por concepto
 de<br>refrigerio, etc. en su(s) ocupación(es)<br>secundaria(as)? - Monto
-Total S/. - Ingreso<br>líquido
+Total S/. - Ingreso Total
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee" colspan="2">
 <em>range: 120.0-71854.0</em>
@@ -997,16 +1021,16 @@ Total S/. - Ingreso<br>líquido
 7
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-OCU500
+I538E1
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-Indicador de la PEA
+(Imputado, deflactado, anualizado) ¿Cuánto fue su<br>ingreso en el mes
+anterior, incluyendo horas<br>extras, bonificaciones, pago por concepto
+de<br>refrigerio, etc. en su(s) ocupación(es)<br>secundaria(as)? - Monto
+Total S/. - Ingreso<br>líquido
 </td>
-<td style="padding:0.2cm; text-align:left; vertical-align:top;">
-1<br>2<br>3<br>4
-</td>
-<td style="padding:0.2cm; text-align:left; vertical-align:top;">
-Ocupado<br>Desocupado abierto<br>Desocupado oculto<br>No PEA
+<td style="padding:0.2cm; text-align:left; vertical-align:top;" colspan="2">
+<em>range: 120.0-71854.0</em>
 </td>
 </tr>
 <tr>
@@ -1014,16 +1038,16 @@ Ocupado<br>Desocupado abierto<br>Desocupado oculto<br>No PEA
 8
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-D524A1
+OCU500
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-(Deflactado, anualizado) ¿Cuánto fue su ingreso<br>total en el(la) …
-anterior, incluyendo las horas<br>extras, bonificaciones, pago por
-concepto de<br>refrigerio, movilidad, comisiones, etc.? - Monto<br>S/. -
-Ingreso Total
+Indicador de la PEA
 </td>
-<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee" colspan="2">
-<em>range: 96-303554</em>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
+1<br>2<br>3<br>4
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
+Ocupado<br>Desocupado abierto<br>Desocupado oculto<br>No PEA
 </td>
 </tr>
 <tr>
@@ -1031,16 +1055,16 @@ Ingreso Total
 9
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-OCUPINF
+D524A1
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-Situación de informalidad (ocup.principal)
+(Deflactado, anualizado) ¿Cuánto fue su ingreso<br>total en el(la) …
+anterior, incluyendo las horas<br>extras, bonificaciones, pago por
+concepto de<br>refrigerio, movilidad, comisiones, etc.? - Monto<br>S/. -
+Ingreso Total
 </td>
-<td style="padding:0.2cm; text-align:left; vertical-align:top;">
-1<br>2
-</td>
-<td style="padding:0.2cm; text-align:left; vertical-align:top;">
-empleo informal<br>empleo formal
+<td style="padding:0.2cm; text-align:left; vertical-align:top;" colspan="2">
+<em>range: 96-303554</em>
 </td>
 </tr>
 <tr>
@@ -1048,17 +1072,16 @@ empleo informal<br>empleo formal
 10
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-EMPLPSEC
+OCUPINF
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-Empleo informal dentro y fuera del Sector informal<br>(ocup. principal)
+Situación de informalidad (ocup.principal)
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
 1<br>2
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
-empleo informal en el sector informal<br>empleo informal fuera del
-sector informal
+empleo informal<br>empleo formal
 </td>
 </tr>
 <tr>
@@ -1066,12 +1089,30 @@ sector informal
 11
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
-FAC500A
+EMPLPSEC
 </td>
 <td style="padding:0.2cm; text-align:left; vertical-align:top;">
+Empleo informal dentro y fuera del Sector informal<br>(ocup. principal)
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top;">
+1<br>2
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top;">
+empleo informal en el sector informal<br>empleo informal fuera del
+sector informal
+</td>
+</tr>
+<tr>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
+12
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
+FAC500A
+</td>
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee">
 Factor de Expansión de Empleo/Ingresos<br>proyecciones CPV-2007
 </td>
-<td style="padding:0.2cm; text-align:left; vertical-align:top;" colspan="2">
+<td style="padding:0.2cm; text-align:left; vertical-align:top; background-color:#eeeeee" colspan="2">
 <em>range: 1.9-2210.3</em>
 </td>
 </tr>
@@ -1218,11 +1259,11 @@ Factor de Expansión Anual Proyecciones CPV-2007
 #ENAHO 2019
 enaho2019&lt;-
   #modulo5 = base
-  m05_2019 %&gt;% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %&gt;% 
+  m05_2019 %&gt;% select(ids,CODPERSO,P507,P207,P208A,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %&gt;% 
   #modulo1
   left_join(m01_2019 %&gt;% select(ids,PANEL,NBI1,NBI2,NBI3,NBI4,NBI5,FACTOR07)) %&gt;%
   #modulo3
-  left_join(m03_2019 %&gt;% select(ids,CODPERSO,P300A,FACTOR07)) %&gt;% 
+  left_join(m03_2019 %&gt;% select(ids,CODPERSO,P300A,P301A,FACTOR07)) %&gt;% 
   #modulo34
   left_join(m34_2019 %&gt;% select(ids,MIEPERHO,INGHOG2D,GASHOG2D,GRU11HD,ESTRSOCIAL,POBREZA,FACTOR07))
   
@@ -1230,20 +1271,26 @@ enaho2019&lt;-
 #ENAHO 2020
 enaho2020&lt;-
   #modulo5 = base
-  m05_2020 %&gt;% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %&gt;% 
+  m05_2020 %&gt;% select(ids,CODPERSO,P507,P207,P208A,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %&gt;% 
   #modulo1
   left_join(m01_2020 %&gt;% select(ids,PANEL,NBI1,NBI2,NBI3,NBI4,NBI5,FACTOR07)) %&gt;%
   #modulo3
-  left_join(m03_2020 %&gt;% select(ids,CODPERSO,P300A,FACTOR07)) %&gt;% 
+  left_join(m03_2020 %&gt;% select(ids,CODPERSO,P300A,P301A,FACTOR07)) %&gt;% 
   #modulo34
   left_join(m34_2020 %&gt;% select(ids,MIEPERHO,INGHOG2D,GASHOG2D,GRU11HD,ESTRSOCIAL,POBREZA,FACTOR07))
 
+#juntar bases
 enaho19_20&lt;-
   bind_rows(enaho2019, enaho2020)
 
+#restaura en caso se pierda alguna metadata
+enaho19_20&lt;-
+copy_labels(enaho19_20, enaho2019)
+
+#exportar
 enaho19_20 %&gt;% 
   janitor::clean_names() %&gt;% 
-  write_sav(&quot;enaho_2019_2020.sav&quot;)</code></pre>
+  write_sav(here(&quot;data/enaho_2019_2020.sav&quot;))</code></pre>
 </div>
 <div id="sintaxis-para-tabla" class="section level2">
 <h2>Sintaxis para tabla</h2>
