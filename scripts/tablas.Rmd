@@ -201,6 +201,8 @@ base %>%
 
 Variables numéricas
 
+Actualmente tengo problemas adapatando gtsummary para variables continuas por lo que utilizaré el método tradicional por ahora.
+
 ```{r, eval=FALSE}
 #Variables wdt.mean / numéricas
 plyr::ddply(as_label(base),~ estrsocial,summarise,  
@@ -286,7 +288,10 @@ tab2019_p507<-
   tbl_merge(list(tab2019_p507_inf,tab2019_p507_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2019**")
 
-tab2019_p507
+tab2019_p507 %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -332,11 +337,31 @@ tab2020_p507<-
   tbl_merge(list(tab2020_p507_inf,tab2020_p507_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2020**")
 
-tab2020_p507
+tab2020_p507 %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
 #### Horas trabajadas (i520)
+
+##### 2019
+
+```{r, eval=FALSE}
+
+plyr::ddply(as_label(base),~ estrsocial,summarise,  
+            Media=wtd.mean(inghog2d,factor07, na.rm=T))
+
+base2 %>%
+  as_label() %>% 
+  #as_survey_design(1, weight = FACTOR07, variables = c(P612A, P612N)) %>%
+  #group_by(estrsocial) %>%
+  summarize(mean = wtd.mean(inghog2d, factor07))
+
+```
+
+##### 2020
 
 #### Empleo informal dentro y fuera del sector informal (emplpsec)
 
@@ -362,7 +387,10 @@ tab2019_emplpsec<-
   bold_labels() %>%
   modify_caption("**Año: 2019**")
 
-tab2019_emplpsec
+tab2019_emplpsec %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -388,7 +416,10 @@ tab2020_emplpsec<-
   bold_labels() %>%
   modify_caption("**Año: 2020**")
 
-tab2020_emplpsec
+tab2020_emplpsec %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -439,7 +470,10 @@ tab2019_nbi<-
   tbl_merge(list(tab2019_nbi_inf,tab2019_nbi_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2019**")
 
-tab2019_nbi
+tab2019_nbi %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -485,7 +519,10 @@ tab2020_nbi<-
   tbl_merge(list(tab2020_nbi_inf,tab2020_nbi_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2020**")
 
-tab2020_nbi
+tab2020_nbi %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -534,7 +571,10 @@ tab2019_nbi_total<-
   tbl_merge(list(tab2019_nbi_total_inf,tab2019_nbi_total_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2019**")
 
-tab2019_nbi_total
+tab2019_nbi_total %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -580,13 +620,24 @@ tab2020_nbi_total<-
   tbl_merge(list(tab2020_nbi_total_inf,tab2020_nbi_total_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2020**")
 
-tab2020_nbi_total
+tab2020_nbi_total %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
 #### Ingreso per capita (ing_cap)
 
+##### 2019
+
+##### 2020
+
 #### Gasto per capita (gas_cap)
+
+##### 2019
+
+##### 2020
 
 #### Situación de pobreza (pobreza)
 
@@ -632,7 +683,10 @@ tab2019_pobreza<-
   tbl_merge(list(tab2019_pobreza_inf,tab2019_pobreza_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2019**")
 
-tab2019_pobreza
+tab2019_pobreza %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -678,7 +732,10 @@ tab2020_pobreza<-
   tbl_merge(list(tab2020_pobreza_inf,tab2020_pobreza_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2020**")
 
-tab2020_pobreza
+tab2020_pobreza %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -727,7 +784,10 @@ tab2019_dpto<-
   tbl_merge(list(tab2019_dpto_inf,tab2019_dpto_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2019**")
 
-tab2019_dpto
+tab2019_dpto %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
@@ -773,7 +833,10 @@ tab2020_dpto<-
   tbl_merge(list(tab2020_dpto_inf,tab2020_dpto_for), tab_spanner = c("**Empleo informal**", "**Empleo formal**")) %>%
   modify_caption("**Año: 2020**")
 
-tab2020_dpto
+tab2020_dpto %>% 
+  as_kable_extra() %>% 
+  kable_paper() %>%
+  scroll_box(width = "200%")
 
 ```
 
