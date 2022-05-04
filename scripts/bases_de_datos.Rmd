@@ -30,6 +30,9 @@ pacman::p_load(
   #Trabajar con encuestas
   survey, srvyr
   )
+
+#Set working directory de manera relativa
+here::i_am("scripts/bases_de_datos.Rmd")
 ```
 
 ## Bases de datos
@@ -55,34 +58,35 @@ Asimismo, el tamaño de la muestra panel es de 12 702 viviendas particulares mie
 Se importan las bases de datos de los años 2019 y 2020 de la ENAHO (actualizado anual):
 
 ```{r}
+
 #ENAHO 2019 ACTUALIZADA ANUAL
 
 #modulo 01: Características de la Vivienda y del Hogar
-m01_2019<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo01.zip", "687-Modulo01/Enaho01-2019-100.sav"))
+m01_2019<-read_sav(here("687-Modulo01/Enaho01-2019-100.sav"))
 
 #modulo 03: Educación
-m03_2019<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo03.zip", "687-Modulo03/Enaho01A-2019-300.sav"))
+m03_2019<-read_sav(here("687-Modulo03/Enaho01A-2019-300.sav"))
 
 #modulo 05: Empleo e Ingresos
-m05_2019<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo05.zip", "687-Modulo05/Enaho01a-2019-500.sav"))
+m05_2019<-read_sav(here("687-Modulo05/Enaho01a-2019-500.sav"))
 
 #modulo 34: Sumarias (Variables Calculadas)
-m34_2019<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2019_ACTUALIZADA_ANUAL/687-Modulo34.zip", "687-Modulo34/Sumaria-2019.sav"))
+m34_2019<-read_sav(here("687-Modulo34/Sumaria-2019.sav"))
 
 
 #ENAHO 2020 ACTUALIZADA ANUAL
 
 #modulo 01: Características de la Vivienda y del Hogar
-m01_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo01.zip", "737-Modulo01/Enaho01-2020-100.sav"))
+m01_2020<-read_sav(here("737-Modulo01/Enaho01-2020-100.sav"))
 
 #modulo 03: Educación
-m03_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo03.zip", "737-Modulo03/Enaho01A-2020-300.sav"))
+m03_2020<-read_sav(here("737-Modulo03/Enaho01A-2020-300.sav"))
 
 #modulo 05: Empleo e Ingresos
-m05_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo05.zip", "737-Modulo05/Enaho01A-2020-500.sav"))
+m05_2020<-read_sav(here("737-Modulo05/Enaho01A-2020-500.sav"))
 
 #modulo 34: Sumarias (Variables Calculadas)
-m34_2020<-read_sav(unzip("C:/Users/Lenovo/OneDrive - Universidad del Pacífico/Bases de datos/ENAHO_2020_ACTUALIZADA_ANUAL/737-Modulo34.zip", "737-Modulo34/Sumaria-2020.sav"))
+m34_2020<-read_sav(here("737-Modulo34/Sumaria-2020.sav"))
 
 
 ```
@@ -169,7 +173,7 @@ enaho2019<-
   #modulo5 = base
   m05_2019 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %>% 
   #modulo1
-  left_join(m01_2019 %>% select(ids,PANEL,NBI4,NBI5,FACTOR07)) %>%
+  left_join(m01_2019 %>% select(ids,PANEL,NBI1,NBI2,NBI3,NBI4,NBI5,FACTOR07)) %>%
   #modulo3
   left_join(m03_2019 %>% select(ids,CODPERSO,P300A,FACTOR07)) %>% 
   #modulo34
@@ -181,18 +185,24 @@ enaho2020<-
   #modulo5 = base
   m05_2020 %>% select(ids,CODPERSO,P507,P207,I520,I538A1,I538E1,OCU500,D524A1,OCUPINF,EMPLPSEC,FAC500A) %>% 
   #modulo1
-  left_join(m01_2020 %>% select(ids,PANEL,NBI4,NBI5,FACTOR07)) %>%
+  left_join(m01_2020 %>% select(ids,PANEL,NBI1,NBI2,NBI3,NBI4,NBI5,FACTOR07)) %>%
   #modulo3
   left_join(m03_2020 %>% select(ids,CODPERSO,P300A,FACTOR07)) %>% 
   #modulo34
   left_join(m34_2020 %>% select(ids,MIEPERHO,INGHOG2D,GASHOG2D,GRU11HD,ESTRSOCIAL,POBREZA,FACTOR07))
 
+#juntar bases
 enaho19_20<-
   bind_rows(enaho2019, enaho2020)
 
+#restaura en caso se pierda alguna metadata
+enaho19_20<-
+copy_labels(enaho19_20, enaho2019)
+
+#exportar
 enaho19_20 %>% 
   janitor::clean_names() %>% 
-  write_sav("enaho_2019_2020.sav")
+  write_sav(here("data/enaho_2019_2020.sav"))
 
 ```
 
@@ -218,5 +228,6 @@ data %>%
   filter(!is.na(var1)) %>%
   group_by(var2) %>%
   mutate(n=round_half_up(n), porc=round_half_up(n/sum(n)*100, 2))
+
 ```
 

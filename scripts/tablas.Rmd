@@ -1,0 +1,231 @@
+---
+title: "Tablas de datos"
+author: "Santiago Sotelo"
+date: '2022-05-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Paquetes
+
+```{r}
+pacman::p_load(
+  #Working directory
+  here,
+  #data tools
+  tidyverse, janitor, glue, lubridate, scales, Hmisc,lazyeval,
+  #Gráficos
+  plotly, ggrepel, cowplot, grid,
+  #importar / exportar
+  haven, rio, officer, officedown,
+  #Etiquetas
+  sjlabelled,
+  #tablas
+  xtable, flextable, knitr, kableExtra, DT, gtsummary, gt,
+  #Visualización
+  ggpubr, paletteer, RColorBrewer, grid, ggthemes, rvg, cowplot,  scales, ggtext, ggrepel,
+  #mapas
+  sf, sfheaders, leaflet, osmdata,
+  #Trabajar con encuestas
+  survey, srvyr
+  )
+
+#Set working directory de manera relativa
+here::i_am("scripts/tablas.Rmd")
+
+```
+
+## Base de datos
+
+Se elaboró una base de datos unificada que incluye el año 2019 y 2020. El proceso de unificación se puede consultar en el archivo `base_de_datos.Rmd`. De manera explorativa podemos apreciar que la base tiene las siguientes características.
+
+```{r}
+#BASE UNIFICADA
+base<-read_sav(here("data/enaho_2019_2020.sav"))
+
+dim(base)
+
+```
+
+Cuenta con 183411 observaciones y 30 variables las cuales son:
+
+```{r}
+names(base)
+```
+
+Estos nombres han sido puestos en formato `clean_names()` el cual pone en minúscula, sin caracteres especiales y sin espacios a los nombres para efectos de una mejor manipulación de datos. A continuación, se presenta un diccionario de códigos de las variables con las que se va a trabajar:
+
+```{r}
+base %>%
+  sjPlot::view_df()
+
+```
+
+Ahora bien, antes de iniciar con las tablas es necesario filtrar los casos que exceden el ámbito del estudio y crear las variables adicionales a partir de las variables de la base.
+
+### Filtrar
+
+El estudio se centra en el área urbana del Perú por lo cual nos apoyaremos de la variable `estrato` y `estrsocial`:
+
+```{r}
+base1<-
+  base %>% 
+  filter(!(estrato %in% c(7,8)) & !(estrsocial %in% 6) & !is.na(estrsocial)) 
+
+```
+
+De esta manera filtramos aquellos que eran parte de un "Área de Empadronamiento Rural" y que fueron asignados como "Rural" en el estrato socio-económico (o tenían un valor perdido en esta).
+
+### Nuevas variables
+
+Ahora creamos las siguientes variables a partir de las variables seleccionadas:
+
+- Departamento del encuestado
+
+- Dominio resumido
+
+- Cuenta con una (o más) Necesidad Básica Insatisfecha (sí/no)
+
+- Número de Necesidades Básicas Insatisfechas
+
+- Ingreso per cápita
+
+- Gasto per cápita
+
+Me apoyo en la página [GeoDir](https://account.geodir.co/recursos/ubigeo-inei-peru.html) para determinar los Ubigeos del Perú, en este caso, el departamento.
+
+```{r}
+base2<-
+  base1 %>% 
+  mutate(
+    #departamento
+    dpto=str_sub(ubigeo, 1,2),
+    dpto=case_when(
+      dpto %in% "01" ~ "Amazonas",
+      dpto %in% "02" ~ "Áncash",
+      dpto %in% "03" ~ "Apurímac",
+      dpto %in% "04" ~ "Arequipa",
+      dpto %in% "05" ~ "Ayacucho",
+      dpto %in% "06" ~ "Cajamarca",
+      dpto %in% "07" ~ "Callao",
+      dpto %in% "08" ~ "Cusco",
+      dpto %in% "09" ~ "Huancavelica",
+      dpto %in% "10" ~ "Huánuco",
+      dpto %in% "11" ~ "Ica",
+      dpto %in% "12" ~ "Junín",
+      dpto %in% "13" ~ "La Libertad",
+      dpto %in% "14" ~ "Lambayeque",
+      dpto %in% "15" ~ "Lima",
+      dpto %in% "16" ~ "Loreto",
+      dpto %in% "17" ~ "Madre de Dios",
+      dpto %in% "18" ~ "Moquegua",
+      dpto %in% "19" ~ "Pasco",
+      dpto %in% "20" ~ "Piura",
+      dpto %in% "21" ~ "Puno",
+      dpto %in% "22" ~ "San Martín",
+      dpto %in% "23" ~ "Tacna",
+      dpto %in% "24" ~ "Tumbes",
+      dpto %in% "25" ~ "Ucayali"
+    ),
+    
+    #Dominio resumido
+    dominio_r=case_when(
+      dominio %in% c(1,2,3) ~ "Costa",
+      dominio %in% c(4,5,6) ~ "Sierra",
+      dominio %in% c(7) ~ "Selva",
+      dominio %in% c(8) ~ "Lima Metropolitana",
+    ),
+    
+    #NBI dicotómica
+    nbi=case_when(
+      (nbi1+nbi2+nbi3+nbi4+nbi5) > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    
+    #número de NBI
+    nbi_total=nbi1+nbi2+nbi3+nbi4+nbi5,
+    
+    #ingreso per capita
+    ing_cap=inghog2d/mieperho,
+    
+    #gasto per capita
+    gas_cap=gashog2d/mieperho
+    
+  )
+```
+
+## Tablas
+
+Variables de cruce:
+
+- Año
+- Dominio resumido
+- Sexo
+- Lengua materna
+- Estrato socio-económico
+- Situación de informalidad (ocupación principal)
+
+### Ocupación principal
+
+#### 2019
+```{r}
+# base2 %>%
+#   as_label() %>%
+#   select(
+#     #cruces
+#     ano, dominio_r, p207, p300a, estrsocial, ocupinf, 
+#     #var
+#     p507,
+#     #factor
+#     fac500a
+#     
+#     ) %>% 
+#   group_by(ano, dominio_r, p207, p300a, estrsocial, ocupinf) %>%
+#   count(wt=fac500a) %>%
+#   filter(!is.na(ocupinf)) %>%
+#   group_by(ano, dominio_r, p207, p300a, estrsocial) %>%
+#   mutate(n=round_half_up(n), porc=round_half_up(n/sum(n)*100, 2)) %>% 
+#   flextable() %>% merge_v() %>% theme_box()
+
+
+survey::svydesign(id = ~1, weights = ~fac500a, data = as_label(base2) %>% filter(ano %in% "2019")) %>%
+  tbl_svysummary(by = p507, include = c(dominio_r, p207, p300a, estrsocial, ocupinf))
+
+```
+
+#### 2020
+```{r}
+
+survey::svydesign(id = ~1, weights = ~fac500a, data = as_label(base2) %>% filter(ano %in% "2020")) %>%
+  tbl_svysummary(by = p507, include = c(dominio_r, p207, p300a, estrsocial, ocupinf))
+
+```
+
+
+## Sintaxis para tabla
+
+### Código para tabla para variables numérica (wdt.mean)
+
+```{r, eval=FALSE}
+data %>%
+  as_label() %>%
+  group_by(var1) %>%
+  summarise(Media = wtd.mean(var2, FACTOR))
+
+```
+
+### Código para tabla para variables categóricas (count)
+
+```{r, eval=FALSE}
+data %>%
+  as_label() %>%
+  group_by(var1, var2) %>%
+  count(wt=FACTOR) %>%
+  filter(!is.na(var1)) %>%
+  group_by(var2) %>%
+  mutate(n=round_half_up(n), porc=round_half_up(n/sum(n)*100, 2))
+```
+
